@@ -1,7 +1,7 @@
 # Observing proxy
-A proxy for observing object mutations
+A proxy for observing object mutations.
 
-## Use
+## Usage
 ```javascript
 var obj={name:'Peter',age:22};
 
@@ -12,6 +12,6 @@ _o.observe(obj,function(changes){
         console.log('Peter got older')
 });
 
-_o(obj).age=23;
+_o(obj).age++;
 //> Peter got older
 ```
