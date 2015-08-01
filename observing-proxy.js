@@ -1,224 +1,224 @@
 /*
- * Observing proxy v1.0
+ * Observing proxy
  * https://github.com/ytiurin/observing-proxy.js
- * https://github.com/ytiurin/observing-proxy.js/raw/master/LICENSE
+ *
+ * The MIT License (MIT)
+ * Copyright (c) 2015 Yevhen Tiurin <yevhentiurin@gmail.com>
  */
 
-(function(){
+'use strict';
 
-function addChangeHandler(userChangeHandler,callOnInit)
-{
-  this.changeHandlers.indexOf(userChangeHandler)===-1&&this.changeHandlers
-    .push(userChangeHandler);
+!function(){
 
-  if(callOnInit){
-    var changes=[];
-    for(var key in this.sourceObject)
-      if(typeof this.sourceObject[key]!=='function')
-        changes.push({name:key,object:this.sourceObject,type:'update',
-          oldValue:this.sourceObject[key]});
+var tl=function(i,ln,ms){
+  return function(ms,f){
+    i++;
+    if(f()) ln='info',ms='Test '+i+' passed: '+ms;
+    else ln='error',ms='Test '+i+' failed: '+ms;
+    console[ln](ms)}}(0);
+var cl=function(){
+  console.log.apply(console,arguments)};
 
-    userChangeHandler.call(this.sourceObject,changes);
-  }
-}
+var observingProxy=function(ts,ps,cs,hs){
 
-function defineObservableProperties()
-{
-  var propertyNames=getDeepPropertyNames(this.sourceObject,this.observableKeys);
-  for(var i=0;i<propertyNames.length;i++)
-    this.defineObservableProperty(propertyNames[i]);
-}
+  function getDeepPropertyDescriptors(o)
+  {
+    var ns;
 
-function defineObservableProperty(propertyName)
-{
-  var isEnum=typeof this.sourceObject[propertyName]!=='function';
-
-  function get(){
-    return this.getPropertyValue(propertyName)}
-
-  function set(userValue){
-    this.setPropertyValue(propertyName,userValue)}
-
-  Object.defineProperty(this.observableKeys,propertyName,{enumerable:isEnum,
-    configurable:true,get:get.bind(this),set:set.bind(this)});
-}
-
-function getDeepPropertyNames(obj)
-{
-  var proto,names,protoNames,reduceNames,i,n;
-
-  names=Object.getOwnPropertyNames(obj);
-  for(i=0,n=names.length;i<n;i++)
-    if(names[i].indexOf('__')===0&&names[i].lastIndexOf('__')===names[i].length-2){
-      names.splice(i,1);
-      i--;
-      n--;
+    if(o){
+      ns=getDeepPropertyDescriptors(Object.getPrototypeOf(o))||[];
+      Array.prototype.push.apply(ns,
+        Object.getOwnPropertyNames(o)
+          .filter(function(k){
+            return isNaN(parseInt(k))})
+          .map(function(k){
+            return {name:k,descriptor:Object.getOwnPropertyDescriptor(o,k)}}));
     }
 
-  if(proto=Object.getPrototypeOf(obj))
-    names=names.concat(getDeepPropertyNames(proto));
-
-  return names;
-}
-
-function getPropertyValue(propertyName)
-{
-  return typeof this.sourceObject[propertyName]!=='function'?
-    this.sourceObject[propertyName]:
-    function(){
-      var len,res,change,so;
-
-      len=this.sourceObject.length,
-      res=this.sourceObject[propertyName].apply(this.sourceObject,arguments);
-
-      if(len&&len!==this.sourceObject.length)
-        this.undefineObservableProperties(),
-        this.defineObservableProperties();
-
-      so=this.sourceObject;
-      change={name:propertyName,object:so,type:'call',arguments:arguments,
-        result:res};
-
-      if(propertyName==='pop')
-        change={object:so,type:'splice',index:this.sourceObject.length-1,
-          removed:[res],addedCount:0};
-
-      else if(propertyName==='push')
-        change={object:so,type:'splice',index:this.sourceObject.length-1,
-          removed:[],addedCount:1};
-
-      else if(propertyName==='shift')
-        change={object:so,type:'splice',index:0,removed:[res],addedCount:0};
-
-      else if(propertyName==='splice')
-        change={object:so,type:'splice',index:arguments[0],removed:res,
-          addedCount:Array.prototype.slice.call(arguments,2).length};
-
-      else if(propertyName==='unshift')
-        change={object:so,type:'splice',index:0,removed:[],addedCount:1};
-
-      this.changes.push(change);
-      setTimeout(function(){this.notifyObservers()}.bind(this));
-
-      return res;
-    }.bind(this);
-}
-
-function notifyObservers()
-{
-  var changes=this.changes.splice(0,this.changes.length);
-
-  if(changes.length)
-    for(var i=0;i<this.changeHandlers.length;i++)
-      this.changeHandlers[i].call(this,changes);
-}
-
-function removeChangeHandler(userChangeHandler)
-{
-  var rmInd=this.changeHandlers.indexOf(userChangeHandler);
-  rmInd>-1&&this.changeHandlers.splice(rmInd,1);
-}
-
-function setPropertyValue(propertyName,propertyValue)
-{
-  if(this.sourceObject[propertyName]!==propertyValue){
-    var oldValue=this.sourceObject[propertyName];
-    this.sourceObject[propertyName]=propertyValue;
-    this.changes.push({name:propertyName,object:this.sourceObject,type:
-      'update',oldValue:oldValue});
-    setTimeout(function(){this.notifyObservers()}.bind(this));
+    return ns;
   }
-}
 
-function undefineObservableProperties()
-{
-  var propertyNames=getDeepPropertyNames(this.observableKeys);
-  for(var i=propertyNames.length;i--;)
-    delete this.observableKeys[i];
-}
+  function newProxy(t)
+  {
+    var p={},ns=getDeepPropertyDescriptors(t);
 
-function ObservingProxy(sourceObject)
-{
-  this.sourceObject=sourceObject||undefined;
-  this.observableKeys={};
-  this.changeHandlers=[];
-  this.changes=[];
+    for(var i=ns.length;i--;){
+      delete ns[i].descriptor.value;
+      delete ns[i].descriptor.writable;
 
-  Object.defineProperty(this.observableKeys,'__observingProxy',{value:this});
-  this.defineObservableProperties();
-}
+      ns[i].descriptor.get=propertyGetter.bind({target:t,name:ns[i].name});
+      ns[i].descriptor.set=propertySetter.bind({target:t,name:ns[i].name});
 
-ObservingProxy.prototype={addChangeHandler:addChangeHandler,
-  defineObservableProperties:defineObservableProperties,
-  defineObservableProperty:defineObservableProperty,
-  getPropertyValue:getPropertyValue,
-  notifyObservers:notifyObservers,
-  removeChangeHandler:removeChangeHandler,
-  setPropertyValue:setPropertyValue,
-  undefineObservableProperties:undefineObservableProperties};
-
-function getObservableKeys(obj)
-{
-  var objProxy;
-
-  if(!obj)
-    return obj;
-
-  if(obj.observableKeys)
-    objProxy=obj;
-  else
-    for(var i=0;i<this.proxies.length;i++)
-      if(this.proxies[i].sourceObject===obj){
-        objProxy=this.proxies[i];
-        break;
+      try{
+        Object.defineProperty(p,ns[i].name,ns[i].descriptor);
       }
+      catch(e){}
+    }
 
-  if(!objProxy)
-    this.proxies.push(objProxy=new ObservingProxy(obj));
+    return p;
+  }
 
-  return objProxy.observableKeys;
-}
+  function notifyObservers(target)
+  {
+    var i=targetIndex(target);
 
-function observeObject(obj,handler,callOnInit)
+    if(cs[i].length)
+      for(var l=0;l<hs[i].length;l++)
+        hs[i][l].call(this,cs[i]);
+
+    cs[i]=[];
+  }
+
+  function propertyGetter()
+  {
+    var r=this.target[this.name];
+
+    if(Array.isArray(this.target)&&['pop','push','shift','splice','unshift'].
+      indexOf(this.name)>-1)
+      r=function(){
+        var res=this.target[this.name].apply(this.target,arguments);
+
+        cs[targetIndex(this.target)].push(({
+          'pop':{object:this.target,type:'splice',index:this.target.length-1,
+            removed:[res],addedCount:0},
+          'push':{object:this.target,type:'splice',index:this.target.length-1,
+            removed:[],addedCount:1},
+          'shift':{object:this.target,type:'splice',index:0,removed:[res],
+            addedCount:0},
+          'splice':{object:this.target,type:'splice',index:arguments[0],
+            removed:res,addedCount:Array.prototype.slice.call(arguments,2).length},
+          'unshift':{object:this.target,type:'splice',index:0,removed:[],
+            addedCount:1}
+        })[this.name]);
+
+        setTimeout(function(){
+          notifyObservers(this.target)}.bind(this));
+      }.bind(this);
+
+    return r;
+  }
+
+  function propertySetter(userVal)
+  {
+    var val=this.target[this.name];
+    if(val!==userVal){
+      this.target[this.name]=userVal;
+      cs[targetIndex(this.target)].push(
+        {name:this.name,object:this.target,type:'update',oldValue:val});
+      setTimeout(function(){
+        notifyObservers(this.target)}.bind(this));
+    }
+  }
+
+  function targetIndex(t)
+  {
+    var i=ts.indexOf(t);
+
+    if(i===-1){
+      i=ts.push(t)-1;
+      ps.push(newProxy(t));
+      cs.push([]);
+      hs.push([]);
+    }
+
+    return i;
+  }
+
+  if(this&&this.test_o)
+    tl('getDeepPropertyDescriptors',function(){
+      return getDeepPropertyDescriptors([1,2,3]).length===38});
+
+  if(this&&this.test_o)
+    tl('Property getter',function(){
+      var s={p1:1};
+      return newProxy(s).p1===s.p1});
+
+  if(this&&this.test_o)
+    tl('Property setter',function(){
+      var s={p1:1};
+      newProxy(s).p1=2;
+      return s.p1===2});
+
+  if(this&&this.test_o)
+    tl('Array splice',function(){
+      var s=[];
+      newProxy(s).push(1);
+      return s.length===1});
+
+  return {
+    addChangeHandler:function(target,changeHandler,callOnInit){
+      var i=targetIndex(target);
+      hs[i].indexOf(changeHandler)===-1&&hs[i].push(changeHandler);
+
+      if(callOnInit){
+        var changes=Object.getOwnPropertyNames(target).map(function(key){
+          return {name:key,object:target,type:'update',oldValue:target[key]}
+        });
+        changeHandler.call(target,changes);
+      }
+    },
+    getProxy:function(target){
+      return ps[targetIndex(target)];
+    },
+    removeChangeHandler:function(target,changeHandler){
+      var i=targetIndex(target),rmInd;
+      if((rmInd=hs[i].indexOf(changeHandler))>-1)
+        hs[i].splice(rmInd,1);
+    }
+  }
+}.bind(this)([],[],[],[]);
+
+function _o(target,changeHandler)
 {
-  var proxy;
+  if(changeHandler)
+    observingProxy.addChangeHandler(target,changeHandler);
 
-  if(proxy=getObservableKeys.bind(this)(obj))
-    proxy.__observingProxy.addChangeHandler(handler,callOnInit);
-
-  return this;
-}
-
-function unobserveObject(obj,handler)
-{
-  var proxy;
-
-  if(proxy=getObservableKeys.bind(this)(obj))
-    proxy.__observingProxy.removeChangeHandler(handler);
-
-  return this;
-}
-
-function observingInstance()
-{
-  this.proxies=[];
-
-  var ok=getObservableKeys.bind(this);
-  ok.__ObservingProxy=ObservingProxy;
-  ok.observe=observeObject.bind(this);
-  ok.unobserve=unobserveObject.bind(this);
-
-  return ok;
+  return observingProxy.getProxy(target);
 }
 
 if(!Object.defineProperty)
   throw 'Observing proxy depend on missing Object.defineProperty method';
 
 if(this.module&&this.module.exports)
-  this.module.exports=new observingInstance;
+  this.module.exports=_o;
 else if(this.define&&this.define.amd)
-  this.define(function(){return new observingInstance});
+  this.define(function(){return _o});
 else
-  this._o=new observingInstance;
+  this._o=_o;
 
-}.bind(this)())
+if(this&&this.test_o)
+  tl('getProxy',function(){
+    var s={p1:1};
+    return observingProxy.getProxy(s).p1===s.p1});
+
+if(this&&this.test_o)
+  !function(){
+    var u;
+    var s={p1:1};
+    observingProxy.addChangeHandler(s,function f(changes){
+      clearTimeout(u);
+      tl('addChangeHandler',function(){return true});
+    });
+    observingProxy.getProxy(s).p1=2;
+    u=setTimeout(function(){
+      tl('addChangeHandler',function(){return false});
+    });
+  }();
+
+if(this&&this.test_o)
+  !function(){
+    var u;
+    var f=function(){
+      clearTimeout(u);
+      tl('removeChangeHandler',function(){return false});
+    };
+    var s={p1:1};
+    observingProxy.addChangeHandler(s,f);
+    observingProxy.removeChangeHandler(s,f);
+    observingProxy.getProxy(s).p1=2;
+    u=setTimeout(function(){
+      tl('removeChangeHandler',function(){return true});
+    });
+  }();
+
+}.bind(this)()
