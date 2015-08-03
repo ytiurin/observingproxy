@@ -14,8 +14,6 @@ _o(obj,function(changes){
 
 _o(obj).age++;
 //> Peter got older
-
-_o.unobserve(obj);
 ```
 
 With arrays:
