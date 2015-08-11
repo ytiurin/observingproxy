@@ -124,22 +124,22 @@ var observingProxy=function(ts,ps,cs,hs){
     return i;
   }
 
-  if(this&&this.test_o)
+  if(this.test_o)
     tl('getDeepPropertyDescriptors',function(){
       return getDeepPropertyDescriptors([1,2,3]).length===38});
 
-  if(this&&this.test_o)
+  if(this.test_o)
     tl('Property getter',function(){
       var s={p1:1};
       return newProxy(s).p1===s.p1});
 
-  if(this&&this.test_o)
+  if(this.test_o)
     tl('Property setter',function(){
       var s={p1:1};
       newProxy(s).p1=2;
       return s.p1===2});
 
-  if(this&&this.test_o)
+  if(this.test_o)
     tl('Array splice',function(){
       var s=[];
       newProxy(s).push(1);
@@ -168,13 +168,16 @@ var observingProxy=function(ts,ps,cs,hs){
   }
 }.bind(this)([],[],[],[]);
 
-function _o(target,changeHandler)
+function _o(target,changeHandler,callOnInit)
 {
   if(changeHandler)
-    observingProxy.addChangeHandler(target,changeHandler);
+    observingProxy.addChangeHandler(target,changeHandler,callOnInit);
 
   return observingProxy.getProxy(target);
 }
+
+_o.observe=observingProxy.addChangeHandler;
+_o.unobserve=observingProxy.removeChangeHandler;
 
 if(!Object.defineProperty)
   throw 'Observing proxy depend on missing Object.defineProperty method';
@@ -186,12 +189,12 @@ else if(this.define&&this.define.amd)
 else
   this._o=_o;
 
-if(this&&this.test_o)
+if(this.test_o)
   tl('getProxy',function(){
     var s={p1:1};
     return observingProxy.getProxy(s).p1===s.p1});
 
-if(this&&this.test_o)
+if(this.test_o)
   !function(){
     var u;
     var s={p1:1};
@@ -205,7 +208,7 @@ if(this&&this.test_o)
     });
   }();
 
-if(this&&this.test_o)
+if(this.test_o)
   !function(){
     var u;
     var f=function(){
