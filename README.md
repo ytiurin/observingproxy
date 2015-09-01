@@ -1,19 +1,19 @@
 # Observing proxy
-A proxy for observing object mutations.
+A proxy for observing object state.
 
 ## Usage
 ```javascript
-var obj={name:'Peter',age:22};
+var obj={person:'Peter',age:22};
 
 _o(obj,function(changes){
   for(var i=0;i<changes.length;i++)
     if(changes[i].name==='age')
       if(changes[i].object.age>changes[i].oldValue)
-        console.log('Peter got older')
+        console.log('Happy birthday, Peter!')
 });
 
 _o(obj).age++;
-//> Peter got older
+//> Happy birthday, Peter!
 ```
 
 With arrays:
