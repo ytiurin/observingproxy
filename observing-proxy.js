@@ -124,6 +124,12 @@ var observingProxy=function(ts,ps,cs,hs){
     return i;
   }
 
+  function validateTarget(target)
+  {
+    if(!target)
+      throw 'Observing proxy error: invalid target';
+  }
+
   if(this.test_o)
     tl('getDeepPropertyDescriptors',function(){
       return getDeepPropertyDescriptors([1,2,3]).length===38});
@@ -147,6 +153,8 @@ var observingProxy=function(ts,ps,cs,hs){
 
   return {
     addChangeHandler:function(target,changeHandler,callOnInit){
+      validateTarget(target);
+
       var i=targetIndex(target);
       hs[i].indexOf(changeHandler)===-1&&hs[i].push(changeHandler);
 
@@ -158,9 +166,13 @@ var observingProxy=function(ts,ps,cs,hs){
       }
     },
     getProxy:function(target){
+      validateTarget(target);
+
       return ps[targetIndex(target)];
     },
     removeChangeHandler:function(target,changeHandler){
+      validateTarget(target);
+
       var i=targetIndex(target),rmInd;
       if((rmInd=hs[i].indexOf(changeHandler))>-1)
         hs[i].splice(rmInd,1);
