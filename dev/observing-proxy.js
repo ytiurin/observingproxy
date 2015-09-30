@@ -224,6 +224,7 @@ function _o(target,changeHandler,callOnInit)
 
 _o.observe=observingProxy.addChangeHandler;
 _o.unobserve=observingProxy.removeChangeHandler;
+_o.observeProperty=observingProxy.addPropertyHandler;
 
 if(typeof Object.defineProperty!=='function')
   throw 'Object.defineProperty is not a function';
