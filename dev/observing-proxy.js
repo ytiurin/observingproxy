@@ -221,9 +221,15 @@ function _o(target,changeHandler,callOnInit)
   return observingProxy.getProxy(target);
 }
 
-_o.observe=observingProxy.addChangeHandler;
-_o.unobserve=observingProxy.removeChangeHandler;
-_o.observeProperty=observingProxy.addPropertyHandler;
+_o.observe=function(){
+  return observingProxy.addChangeHandler.apply(observingProxy,arguments);
+};
+_o.unobserve=function(){
+  return observingProxy.removeChangeHandler.apply(observingProxy,arguments);
+};
+_o.observeProperty=function(){
+  return observingProxy.addPropertyHandler.apply(observingProxy,arguments);
+};
 
 if(typeof Object.defineProperty!=='function')
   throw 'Object.defineProperty is not a function';
