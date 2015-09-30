@@ -65,7 +65,7 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
     var i=targetIndex(target);
 
     for(var l=0;l<handlerStack[i].length;l++)
-      handlerStack[i][l].call(this,changeStack[i]);
+      handlerStack[i][l].call({},changeStack[i]);
 
     changeStack[i]=[];
   }
@@ -170,10 +170,7 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
         var changes=Object.getOwnPropertyNames(target).map(function(key){
           return {name:key,object:target,type:'update',oldValue:target[key]}
         });
-        clearTimeout(timeoutStack[targetInd]);
-        timeoutStack[targetInd]=setTimeout(function(){
-          changeHandler.call(target,changes)
-        });
+        changeHandler.call({},changes)
       }
     },
     addPropertyHandler:function(target,propertyName,changeHandler,callOnInit){
