@@ -172,11 +172,13 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
         });
         clearTimeout(timeoutStack[targetInd]);
         timeoutStack[targetInd]=setTimeout(function(){
-          changeHandler.call(target,changes)});
+          changeHandler.call(target,changes)
+        });
       }
     },
     addPropertyHandler:function(target,propertyName,changeHandler,callOnInit){
       var onPropertyChange;
+      callOnInit=callOnInit===undefined&&true||callOnInit;
 
       this.addChangeHandler(target,onPropertyChange=function(changes){
         for(var i=changes.length;i--;)
@@ -273,6 +275,19 @@ if(this.test_o)
 
 if(this.test_o)
   !function(){
+    var u;
+    var s={p1:1};
+    observingProxy.addChangeHandler(s,function(changes){
+      clearTimeout(u);
+      tl('callOnInit',function(){return true});
+    },true);
+    u=setTimeout(function(){
+      tl('callOnInit',function(){return false});
+    });
+  }();
+
+if(this.test_o)
+  !function(){
     var s={p1:0},proxy=observingProxy.getProxy(s),n=0;
     observingProxy.addChangeHandler(s,function(ch){
       n++;
@@ -305,15 +320,17 @@ if(this.test_o)
       i++;
     });
 
-    proxy.p1=2;
     setTimeout(function(){
-      observer.destroy();
-      proxy.p1=3;
+      proxy.p1=2;
       setTimeout(function(){
-        observer.restore();
-        proxy.p1=4;
+        observer.destroy();
+        proxy.p1=3;
         setTimeout(function(){
-          tl('addPropertyHandler destructor',function(){return i==2});
+          observer.restore();
+          proxy.p1=4;
+          setTimeout(function(){
+            tl('addPropertyHandler destructor',function(){return i==3});
+          });
         });
       });
     });
