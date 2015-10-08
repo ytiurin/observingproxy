@@ -5,7 +5,7 @@
  * The MIT License (MIT)
  * https://github.com/ytiurin/observingproxy/blob/master/LICENSE
  *
- * September 30, 2015
+ * October 9, 2015
  */
 
 'use strict';
@@ -62,12 +62,14 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
 
   function notifyObservers(target)
   {
-    var i=targetIndex(target);
+    var targetInd=targetIndex(target);
 
-    for(var l=0;l<handlerStack[i].length;l++)
-      handlerStack[i][l].call({},changeStack[i]);
+    if(changeStack[targetInd].length){
+      for(var l=0;l<handlerStack[targetInd].length;l++)
+        handlerStack[targetInd][l].call({},changeStack[targetInd]);
 
-    changeStack[i]=[];
+      changeStack[targetInd]=[];
+    }
   }
 
   function propertyGetter()
@@ -205,7 +207,7 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
       var targetInd=targetIndex(target),rmInd;
       if((rmInd=handlerStack[targetInd].indexOf(changeHandler))>-1)
         handlerStack[targetInd].splice(rmInd,1);
-      else
+      else if(!changeHandler)
         handlerStack[targetInd]=[];
 
       clearTimeout(timeoutStack[targetInd]);
@@ -278,15 +280,14 @@ if(this.test_o)
 
 if(this.test_o)
   !function(){
-    var u;
     var s={p1:1};
+    var u=setTimeout(function(){
+      tl('callOnInit',function(){return false});
+    });
     observingProxy.addChangeHandler(s,function(changes){
       clearTimeout(u);
       tl('callOnInit',function(){return true});
     },true);
-    u=setTimeout(function(){
-      tl('callOnInit',function(){return false});
-    });
   }();
 
 if(this.test_o)
@@ -304,14 +305,15 @@ if(this.test_o)
 
 if(this.test_o)
   !function(){
-    var u;
     var s={p1:1};
     observingProxy.addPropertyHandler(s,'p1',function(value){
-      clearTimeout(u);
-      tl('addPropertyHandler',function(){return value===2});
+      if(value===2){
+        clearTimeout(u);
+        tl('addPropertyHandler',function(){return value===2});
+      }
     });
     observingProxy.getProxy(s).p1=2;
-    u=setTimeout(function(){
+    var u=setTimeout(function(){
       tl('addPropertyHandler',function(){return false});
     });
   }();
@@ -332,7 +334,7 @@ if(this.test_o)
           observer.restore();
           proxy.p1=4;
           setTimeout(function(){
-            tl('addPropertyHandler destructor',function(){return i==3});
+            tl('addPropertyHandler destructor',function(){return i==4});
           });
         });
       });
