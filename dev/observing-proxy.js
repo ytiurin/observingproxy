@@ -5,7 +5,7 @@
  * The MIT License (MIT)
  * https://github.com/ytiurin/observingproxy/blob/master/LICENSE
  *
- * October 9, 2015
+ * October 13, 2015
  */
 
 'use strict';
@@ -169,10 +169,16 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
       handlerStack[targetInd].push(changeHandler);
 
       if(callOnInit){
-        var changes=Object.getOwnPropertyNames(target).map(function(key){
-          return {name:key,object:target,type:'update',oldValue:target[key]}
-        });
-        changeHandler.call({},changes)
+        var changes=Array.isArray(target)
+          ?target.map(function(index){
+            return {object:target,type:'splice',index:index,removed:[],
+              addedCount:1}})
+
+          :Object.getOwnPropertyNames(target).map(function(key){
+            return {name:key,object:target,type:'update',oldValue:target[key]}
+            });
+
+        changeHandler.call({},changes);
       }
     },
     addPropertyHandler:function(target,propertyName,changeHandler,callOnInit){
