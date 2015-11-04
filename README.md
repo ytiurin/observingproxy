@@ -1,5 +1,5 @@
 # Observing proxy
-A proxy observing object state using `defineProperty` and deferred notifications. 
+A proxy to observe object state changes. It's based on `defineProperty` setter and deferred notifications. 
 
 ## Usage
 ```javascript
