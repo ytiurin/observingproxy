@@ -54,7 +54,7 @@ _o(arr).push(4);
 //> Array changed
 ```
 
-### Error handling
+### Error handling and destruction
 ```javascript
 var observer=_o.onUpdate(null,'name',function(value){
   //...
@@ -66,6 +66,9 @@ try{
 }
 catch(e){throw e}
 // Observing proxy error: target is null
+
+// Destroy your observer
+observer.destroy();
 ```
 
 ## Deferred observer notification
