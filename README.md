@@ -1,5 +1,5 @@
 # Observing proxy
-A proxy to observe object state changes. It's based on `defineProperty` setter and deferred notifications. 
+A proxy to observe object state changes. It's based on the object property definition with  [`defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method, defering notifications with the `setTimeout` method. 
 
 ## Usage
 ```javascript
@@ -54,7 +54,7 @@ _o(arr).push(4);
 //> Array changed
 ```
 
-### Error handling and destruction
+### Error handling and destructor
 ```javascript
 var observer=_o.onUpdate(null,'name',function(value){
   //...
@@ -72,9 +72,9 @@ observer.destroy();
 ```
 
 ## Deferred observer notification
-While proxy applies property modification immediately, it sends the observer notification call to the end of execution thread using setTimeout as wrapper.
+While proxy applies property modification immediately, it sends the observer notification call to the end of execution thread using `setTimeout` method as a wrapper.
 
-So now if you do
+So now, if you do
 
 ```javascript
 _o.observe(obj,function(changes){
@@ -86,4 +86,4 @@ _o(obj).p2=2;
 _o(obj).p3=3;
 ```
 
-observer is notified only once with `changes` argument containing latest modifications. It makes observer load sustainable to cases when observed object is intensively changed. 
+observer is notified only once with `changes` argument containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified. 
