@@ -37,7 +37,7 @@ _o(obj).age++;
 //> Happy birthday, Peter!
 ```
 
-> Note: This works only for property `update`; 'add' or 'delete' is not supported.
+> Note: it works only with property `update`. `Add` or `delete` operations are not supported.
 
 ### With arrays
 
