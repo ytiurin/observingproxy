@@ -1,7 +1,8 @@
 # Observing proxy
-A proxy to observe object state changes. It's based on the object property definition with  [`defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method, defering notifications with the `setTimeout` method. 
+A proxy for observing object state changes.
 
-## Usage
+It's based on the object property definition with [`defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method, defering notifications with the `setTimeout` method.
+
 ```javascript
 var obj={person:'Eddie',age:22};
 
@@ -21,7 +22,7 @@ _o(obj).age++;
 //> Happy birthday, Peter!
 ```
 
-### Advanced usage (implemented with [Object.observe](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe) in mind)
+## Advanced usage (implemented with [Object.observe](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe) in mind)
 
 ```javascript
 var obj={person:'Peter',age:22};
@@ -37,9 +38,9 @@ _o(obj).age++;
 //> Happy birthday, Peter!
 ```
 
-> Note: it works only with property `update`. `Add` or `delete` operations are not supported.
+> Note: it works only with property `update`. `add` or `delete` operations are not supported.
 
-### With arrays
+## With arrays
 
 ```javascript
 var arr=[1,2,3];
@@ -54,7 +55,7 @@ _o(arr).push(4);
 //> Array changed
 ```
 
-### Error handling and destructor
+## Error handling and destructor
 ```javascript
 var observer=_o.onUpdate(null,'name',function(value){
   //...
@@ -86,4 +87,4 @@ _o(obj).p2=2;
 _o(obj).p3=3;
 ```
 
-observer is notified only once with `changes` argument containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified. 
+observer is notified only once with `changes` argument containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified.

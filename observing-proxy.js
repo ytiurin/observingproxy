@@ -1,16 +1,28 @@
 /*
- * Observing proxy
- * https://github.com/ytiurin/observingproxy
- *
- * The MIT License (MIT)
- * https://github.com/ytiurin/observingproxy/blob/master/LICENSE
- *
- * October 13, 2015
- */
+A proxy for observing object state changes.
 
-'use strict';
+var obj={person:'Eddie',age:22};
+
+_o.onUpdate(obj,{
+  age:function(value){
+    if(value>this.oldValue)
+      console.log('Happy birthday, Peter!')
+  },
+  person:function(value){
+    console.log(this.oldValue+' is now '+value);
+  }
+});
+
+_o(obj).person='Peter';
+//> Eddie is now Peter
+_o(obj).age++;
+//> Happy birthday, Peter!
+
+*/
 
 !function(){
+
+'use strict';
 
 var tl=function(i,ln,ms){
   return function(ms,f){
@@ -122,7 +134,7 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
   {
     var i=targetStack.indexOf(t);
 
-    if(i===-1){
+    if(i===-1&&t){
       i=targetStack.push(t)-1;
       proxyStack.push(newProxy(t));
       changeStack.push([]);
@@ -133,15 +145,11 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
     return i;
   }
 
-  function validateTarget(target)
-  {
-    if(!target)
-      throw 'Observing proxy error: invalid target';
-  }
-
   if(this.test_o)
     tl('getDeepPropertyDescriptors',function(){
-      return getDeepPropertyDescriptors([1,2,3]).length===42});
+      return getDeepPropertyDescriptors([1,2,3]).reduce(function(hasPush,item){
+        return hasPush||item.name==='push';
+      },false)});
 
   if(this.test_o)
     tl('Property getter',function(){
@@ -162,15 +170,13 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
 
   return {
     addChangeHandler:function(target,changeHandler,callOnInit){
-      validateTarget(target);
-
       var targetInd=targetIndex(target);
       handlerStack[targetInd].indexOf(changeHandler)===-1&&
       handlerStack[targetInd].push(changeHandler);
 
       if(callOnInit){
         var changes=Array.isArray(target)
-          ?target.map(function(index){
+          ?target.map(function(_,index){
             return {object:target,type:'splice',index:index,removed:[],
               addedCount:1}})
 
@@ -181,35 +187,10 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
         changeHandler.call({},changes);
       }
     },
-    addPropertyHandler:function(target,propertyName,changeHandler,callOnInit){
-      var onPropertyChange;
-      callOnInit=callOnInit===undefined&&true||callOnInit;
-
-      this.addChangeHandler(target,onPropertyChange=function(changes){
-        for(var i=changes.length;i--;)
-          if(changes[i].name===propertyName){
-            changeHandler.call(changes[i],changes[i].object[changes[i].name]);
-            break;
-          }
-      },callOnInit);
-
-      return {
-        destroy:function(){
-          this.removeChangeHandler(target,onPropertyChange);
-        }.bind(this),
-        restore:function(){
-          this.addChangeHandler(target,onPropertyChange,callOnInit);
-        }.bind(this)
-      };
-    },
     getProxy:function(target){
-      validateTarget(target);
-
-      return proxyStack[targetIndex(target)];
+      return proxyStack[targetIndex(target)]||target;
     },
     removeChangeHandler:function(target,changeHandler){
-      validateTarget(target);
-
       var targetInd=targetIndex(target),rmInd;
       if((rmInd=handlerStack[targetInd].indexOf(changeHandler))>-1)
         handlerStack[targetInd].splice(rmInd,1);
@@ -221,28 +202,62 @@ var observingProxy=function(targetStack,proxyStack,changeStack,handlerStack,time
   }
 }.bind(this)([],[],[],[],[]);
 
-function _o(target,changeHandler,callOnInit)
+function _o(target)
 {
-  if(changeHandler)
-    observingProxy.addChangeHandler(target,changeHandler,callOnInit);
-
   return observingProxy.getProxy(target);
 }
 
-_o.observe=function(){
+_o.observe=function(target,changeHandler,callOnInit){
+  if(!target)
+    throw 'Observing proxy error: cannot _o.observe '+target+' object';
+
   return observingProxy.addChangeHandler.apply(observingProxy,arguments);
 };
-_o.unobserve=function(){
+_o.unobserve=function(target,changeHandler){
+  if(!target)
+    throw 'Observing proxy error: cannot _o.unobserve '+target+' object';
+
   return observingProxy.removeChangeHandler.apply(observingProxy,arguments);
 };
-_o.observeProperty=function(){
-  return observingProxy.addPropertyHandler.apply(observingProxy,arguments);
+_o.onUpdate=function(target,onChangeCollection,callOnInit){
+  var onPropertyChange;
+
+  if(typeof onChangeCollection==='string'){
+    onChangeCollection={};
+    onChangeCollection[arguments[1]]=arguments[2];
+    callOnInit=arguments[3];
+  }
+
+  callOnInit=callOnInit===undefined&&true||callOnInit;
+
+  if(target)
+    observingProxy.addChangeHandler(target,onPropertyChange=function(changes){
+      for(var key in onChangeCollection)
+        for(var i=changes.length;i--;)
+          if(changes[i].name===key&&changes[i].type==='update'){
+            onChangeCollection[key].call(changes[i],changes[i].object[changes[i].name]);
+            break;
+          }
+    },callOnInit);
+
+  return{
+    destroy:function(){
+      observingProxy.removeChangeHandler(target,onPropertyChange);
+    },
+    report:function(){
+      if(!target)
+        throw 'Observing proxy error: cannot _o.onUpdate '+target+' object';
+    },
+    restore:function(){
+      observingProxy.addChangeHandler(target,onPropertyChange,callOnInit);
+    }
+  };
 };
 
 if(typeof Object.defineProperty!=='function')
   throw 'Object.defineProperty is not a function';
 
-if(this.module&&this.module.exports)
+if(this.exports&&this.module)
   this.module.exports=_o;
 else if(this.define&&this.define.amd)
   this.define(function(){return _o});
@@ -312,22 +327,22 @@ if(this.test_o)
 if(this.test_o)
   !function(){
     var s={p1:1};
-    observingProxy.addPropertyHandler(s,'p1',function(value){
+    _o.onUpdate(s,'p1',function(value){
       if(value===2){
         clearTimeout(u);
-        tl('addPropertyHandler',function(){return value===2});
+        tl('onUpdateHandler',function(){return value===2});
       }
     });
     observingProxy.getProxy(s).p1=2;
     var u=setTimeout(function(){
-      tl('addPropertyHandler',function(){return false});
+      tl('onUpdateHandler',function(){return false});
     });
   }();
 
 if(this.test_o)
   !function(){
     var s={p1:1},proxy=observingProxy.getProxy(s),i=0;
-    var observer=observingProxy.addPropertyHandler(s,'p1',function(value){
+    var observer=_o.onUpdate(s,'p1',function(value){
       i++;
     });
 
@@ -340,7 +355,7 @@ if(this.test_o)
           observer.restore();
           proxy.p1=4;
           setTimeout(function(){
-            tl('addPropertyHandler destructor',function(){return i==4});
+            tl('onUpdateHandler destructor',function(){return i==4});
           });
         });
       });
