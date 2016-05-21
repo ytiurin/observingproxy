@@ -1,7 +1,10 @@
+[![npm](https://img.shields.io/npm/v/observingproxy.svg?maxAge=2592000)](https://www.npmjs.com/package/observingproxy)
+[![npm](https://img.shields.io/npm/dm/observingproxy.svg?maxAge=2592000)](https://www.npmjs.com/package/observingproxy)
+
 # Observing proxy
 A proxy for observing object state changes.
 
-It's based on the object property definition with [`defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method, defering notifications with the `setTimeout` method.
+This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as an interface to the user provided object, notifying subscribers about the user object changes.
 
 ```javascript
 var obj={person:'Eddie',age:22};
@@ -20,6 +23,15 @@ _o(obj).person='Peter';
 //> Eddie is now Peter
 _o(obj).age++;
 //> Happy birthday, Peter!
+```
+
+## Install
+```
+npm install observingproxy
+```
+or
+```
+bower install observingproxy
 ```
 
 ## Advanced usage (implemented with [Object.observe](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe) in mind)

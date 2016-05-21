@@ -1,0 +1,23 @@
+{
+  "name": "observingproxy",
+  "description": "A proxy for observing object state changes.",
+  "main": "observing-proxy.js",
+  "authors": [
+    "Eugene Tiurin <yevhentiurin@gmail.com> (https://github.com/ytiurin)"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "observe",
+    "observer",
+    "proxy",
+    "state"
+  ],
+  "homepage": "https://github.com/ytiurin/observingproxy",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
