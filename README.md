@@ -2,26 +2,28 @@
 [![npm](https://img.shields.io/npm/dm/observingproxy.svg?maxAge=2592000)](https://www.npmjs.com/package/observingproxy)
 
 # Observing proxy
-A proxy for observing object state changes.
 
 This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as an interface to the user provided object, notifying subscribers about the user object changes.
 
 ```javascript
-var obj={person:'Eddie',age:22};
-
-_o.onUpdate(obj,{
-  age:function(value){
-    if(value>this.oldValue)
-      console.log('Happy birthday, Peter!')
+// Your observable object
+var obj = { person: "Eddie", age: 22 }
+// Subscribe to object changes
+_o.onUpdate( obj, {
+  // age value change
+  age: function( value ) {
+    if ( value > this.oldValue )
+      console.log( "Happy birthday, Peter!" )
   },
-  person:function(value){
-    console.log(this.oldValue+' is now '+value);
+  // person value change
+  person: function( value ) {
+    console.log( this.oldValue + " is now " + value )
   }
-});
-
-_o(obj).person='Peter';
+})
+// Change object properties using proxy
+_o( obj ).person = "Peter"
 //> Eddie is now Peter
-_o(obj).age++;
+_o( obj ).age++
 //> Happy birthday, Peter!
 ```
 
@@ -37,66 +39,74 @@ bower install observingproxy
 ## Advanced usage (implemented with [Object.observe](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe) in mind)
 
 ```javascript
-var obj={person:'Peter',age:22};
-
-_o.observe(obj,function(changes){
-  for(var i=0;i<changes.length;i++)
-    if(changes[i].name==='age')
-      if(changes[i].object.age>changes[i].oldValue)
-        console.log('Happy birthday, Peter!')
-});
-
-_o(obj).age++;
+_o.observe( obj, function( changes ) {
+  // `changes` is an array of changes
+  // that occured recently
+  for ( var i = 0; i < changes.length; i++ )
+    if ( changes[ i ].name === "age" )
+      if ( changes[ i ].object.age > changes[ i ].oldValue )
+        console.log( "Happy birthday, Peter!" )
+})
+// Change object property using proxy
+_o( obj ).age++
 //> Happy birthday, Peter!
 ```
 
-> Note: it works only with property `update`. `add` or `delete` operations are not supported.
+> Note: Observation works only when property operation is `update`. There is no support for `add` or `delete` operations.
 
 ## With arrays
 
 ```javascript
-var arr=[1,2,3];
-
-_o.observe(arr,function(changes){
-  for(var i=0;i<changes.length;i++)
-    if(changes[i].type==='splice')
-      console.log('Array changed')
-});
-
-_o(arr).push(4);
+// Your observable array
+var arr = [ 1, 2, 3 ]
+// Subscribe for array changes
+_o.observe( arr, function( changes ) {
+  // Iterate through changes
+  for ( var i = 0; i < changes.length; i++ )
+    // Check if array changed
+    if ( changes[ i ].type === "splice" )
+      console.log( "Array changed" )
+})
+// Add item to the array
+_o( arr ).push( 4 )
 //> Array changed
 ```
 
 ## Error handling and destructor
 ```javascript
-var observer=_o.onUpdate(null,'name',function(value){
+// Let's create observer for `null` object
+var observer = _o.onUpdate( null, 'name', function( value ) {
   //...
-});
-
-// Throw observation exception here
-try{
-  observer.report();
+})
+// and try to report an error
+try {
+  // If there was any error during the observer contruction,
+  // an exception will be thrown
+  observer.report()
 }
-catch(e){throw e}
-// Observing proxy error: target is null
-
+catch( e ) {
+  // Observing proxy error: target is null
+}
 // Destroy your observer
-observer.destroy();
+observer.destroy()
 ```
 
 ## Deferred observer notification
-While proxy applies property modification immediately, it sends the observer notification call to the end of execution thread using `setTimeout` method as a wrapper.
+While proxy changes an observed object properties immediately, it sends all the notification calls to the end of the execution thread using `setTimeout` as a wrapper.
 
-So now, if you do
+So when you do:
 
 ```javascript
-_o.observe(obj,function(changes){
-  // iterate changes
+_o.observe( obj, function( changes ) {
+  console.log( changes )
 });
-
-_o(obj).p1=1;
-_o(obj).p2=2;
-_o(obj).p3=3;
+// Change several properties
+_o( obj ).p1 = 1
+_o( obj ).p2 = 2
+_o( obj ).p3 = 3
+//> [{ name: "p1", object: Object, oldValue: 0, type: "update" },
+//> { name: "p2", object: Object, oldValue: 0, type: "update" },
+//> { name: "p3", object: Object, oldValue: 0, type: "update" }]
 ```
 
-observer is notified only once with `changes` argument containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified.
+observer is notified only once with `changes` containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified.
