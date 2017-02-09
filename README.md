@@ -1,6 +1,6 @@
 # Observing proxy
 
-This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as a proxy to the user provided object, notifying subscribers about the target object changes.
+This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as a proxy to the user provided object, notifying subscribers about the object changes.
 
 ```javascript
 // Your observable object
