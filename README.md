@@ -1,9 +1,6 @@
-[![npm](https://img.shields.io/npm/v/observingproxy.svg?maxAge=2592000)](https://www.npmjs.com/package/observingproxy)
-[![npm](https://img.shields.io/npm/dm/observingproxy.svg?maxAge=2592000)](https://www.npmjs.com/package/observingproxy)
-
 # Observing proxy
 
-This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as an interface to the user provided object, notifying subscribers about the user object changes.
+This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as an proxy to the user provided object, notifying subscribers about the target object changes.
 
 ```javascript
 // Your observable object
