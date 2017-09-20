@@ -1,9 +1,9 @@
 # Observing proxy
 
-This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as a proxy to the user provided object, notifying subscribers about the object changes.
+This module is based on the [`Object.defineProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty) method and serves as a proxy interface to the user provided object, notifying subscribers about the object changes.
 
 ```javascript
-// Your observable object
+// Your observable objectЛьва Толстого, 57
 var obj = { person: "Eddie", age: 22 }
 // Subscribe to object changes
 _o.onUpdate( obj, {
@@ -89,9 +89,7 @@ observer.destroy()
 ```
 
 ## Deferred observer notification
-While proxy changes an observed object properties immediately, it sends all the notification calls to the end of the execution thread using `setTimeout` as a wrapper.
-
-So when you do:
+While the proxy interface applies all changes on the target object immediately, all notification calls are sent to the end of the execution queue using `setTimeout` function. So when you do:
 
 ```javascript
 _o.observe( obj, function( changes ) {
@@ -106,4 +104,4 @@ _o( obj ).p3 = 3
 //> { name: "p3", object: Object, oldValue: 0, type: "update" }]
 ```
 
-observer is notified only once with `changes` containing latest modifications. It makes observer a load sustainable to an observed object being intensively modified.
+observer is notified only once with `changes` containing latest modifications. This approach makes all program more sustainable to an intensive modification of an observed object.
